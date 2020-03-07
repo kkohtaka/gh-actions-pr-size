@@ -6,6 +6,6 @@ jobs:
   check_pr_size:
     runs-on: ubuntu-latest
     steps:
-    - uses: docker.pkg.github.com/kkohtaka/gh-actions-pr-size/gh-actions-pr-size:latest
+    - uses: kkohtaka/gh-actions-pr-size/gh-actions-pr-size@master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

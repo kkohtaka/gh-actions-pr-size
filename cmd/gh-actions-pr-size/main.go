@@ -45,7 +45,7 @@ func main() {
 		logger.Fatal("Could not unmarshal an event payload", zap.Error(err))
 	}
 
-	owner := event.GetRepo().GetOwner().GetName()
+	owner := event.GetRepo().GetOwner().GetLogin()
 	repo := event.GetRepo().GetName()
 	number := event.GetPullRequest().GetNumber()
 

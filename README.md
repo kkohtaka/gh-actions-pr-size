@@ -15,9 +15,9 @@ jobs:
   check_pr_size:
     runs-on: ubuntu-latest
     steps:
-      - uses: docker.pkg.github.com/kkohtaka/gh-actions-pr-size/gh-actions-pr-size:latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - uses: kkohtaka/gh-actions-pr-size/gh-actions-pr-size@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 Then, the following labels will be put on your Pull Requests depending on the size of them.

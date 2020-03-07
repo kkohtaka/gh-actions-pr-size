@@ -8,14 +8,14 @@ Add the following GitHub workflow to your repository.
 
 ```yaml
 name: PR size check
-on
+on:
   pull_request:
-    types: ['opened', 'edited']
+    types: ['opened', 'synchronized']
 jobs:
   check_pr_size:
     runs-on: ubuntu-latest
     steps:
-    - uses: kkohtaka/gh-actions-pr-size/gh-actions-pr-size@master
+    - uses: kkohtaka/gh-actions-pr-size@master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```

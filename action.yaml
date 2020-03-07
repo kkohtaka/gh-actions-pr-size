@@ -1,0 +1,9 @@
+name: pr-size
+description: Check the size of Pull Request
+author: "Kazumasa Kohtaka <kkohtaka@gmail.com>"
+branding:
+  icon: 'git-pull-request'
+  color: 'blue'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'

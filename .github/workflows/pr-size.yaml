@@ -1,0 +1,11 @@
+name: PR size check
+on:
+  pull_request:
+    types: ['opened', 'edited']
+jobs:
+  check_pr_size:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: docker.pkg.github.com/kkohtaka/gh-actions-pr-size/gh-actions-pr-size:latest
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

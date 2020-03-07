@@ -20,7 +20,7 @@ jobs:
   check_pr_size:
     runs-on: ubuntu-latest
     steps:
-    - uses: kkohtaka/gh-actions-pr-size@master
+    - uses: kkohtaka/gh-actions-pr-size@v1.0.0
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```

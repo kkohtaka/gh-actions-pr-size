@@ -1,0 +1,8 @@
+name: pr-size
+description: Check the size of Pull Request
+branding:
+  icon: 'git-pull-request'
+  color: 'blue'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'

@@ -1,7 +1,7 @@
 name: PR size check
 on:
   pull_request:
-    types: ['opened', 'edited']
+    types: ['opened', 'synchronized']
 jobs:
   check_pr_size:
     runs-on: ubuntu-latest

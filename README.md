@@ -13,7 +13,7 @@ on:
     types:
     - opened
     - edited
-    - synchronized
+    - synchronize
     - labeled
     - unlabeled
 jobs:

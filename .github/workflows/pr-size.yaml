@@ -13,6 +13,6 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: kkohtaka/gh-actions-pr-size@v1.0.0
+      - uses: kkohtaka/gh-actions-pr-size@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -11,18 +11,20 @@ name: PR size check
 on:
   pull_request:
     types:
-    - opened
-    - edited
-    - synchronize
-    - labeled
-    - unlabeled
+      - opened
+      - edited
+      - synchronize
+      - labeled
+      - unlabeled
 jobs:
   check_pr_size:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
-    - uses: kkohtaka/gh-actions-pr-size@v1.0.0
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: kkohtaka/gh-actions-pr-size@v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 Then, the following labels will be put on your Pull Requests depending on the size of them.

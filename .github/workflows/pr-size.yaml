@@ -10,6 +10,8 @@ on:
 jobs:
   check_pr_size:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
       - uses: kkohtaka/gh-actions-pr-size@v1.0.0
         env:

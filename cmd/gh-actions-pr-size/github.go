@@ -58,7 +58,7 @@ func getPullRequestSize(
 
 	change := 0
 	for _, file := range files {
-		change = *file.Additions + *file.Deletions
+		change += *file.Additions + *file.Deletions
 	}
 	return newSize(change), nil
 }

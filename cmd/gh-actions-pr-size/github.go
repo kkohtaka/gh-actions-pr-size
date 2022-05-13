@@ -22,7 +22,7 @@ func getAllPullRequestFiles(
 		files, resp, err := client.PullRequests.ListFiles(
 			ctx,
 			owner, repo, number,
-			&github.ListOptions{Page: offset, PerPage: 100},
+			&github.ListOptions{Page: offset + 1, PerPage: 100},
 		)
 		if err != nil {
 			logger.Error("Failed to remove a label from a pull request",
@@ -35,7 +35,7 @@ func getAllPullRequestFiles(
 			return nil, fmt.Errorf("list commit files: %w", err)
 		}
 		res = append(res, files...)
-		if offset >= resp.LastPage {
+		if offset+1 >= resp.LastPage {
 			break
 		}
 	}
@@ -76,7 +76,7 @@ func setLabelOnPullRequest(
 		labels, resp, err := client.Issues.ListLabelsByIssue(
 			ctx,
 			owner, repo, number,
-			&github.ListOptions{Page: offset, PerPage: 100},
+			&github.ListOptions{Page: offset + 1, PerPage: 100},
 		)
 		if err != nil {
 			logger.Error("Failed to list labels on a pull request",
@@ -117,7 +117,7 @@ func setLabelOnPullRequest(
 				)
 			}
 		}
-		if offset >= resp.LastPage {
+		if offset+1 >= resp.LastPage {
 			break
 		}
 	}

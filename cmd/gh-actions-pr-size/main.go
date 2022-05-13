@@ -64,10 +64,12 @@ func main() {
 	}
 	client := github.NewClient(tc)
 
-	size, err := getPullRequestSize(ctx, client, owner, repo, number)
+	changed, err := getPullRequestChangedLines(ctx, client, owner, repo, number)
 	if err != nil {
-		logger.Fatal("Could not get pull request size", zap.Error(err))
+		logger.Fatal("Could not get the total number of changed lines in the pull request", zap.Error(err))
 	}
+
+	size := newSize(changed)
 	logger.Info("Got a size of a pull request", zap.String("size", size.String()))
 
 	err = setLabelOnPullRequest(ctx, client, owner, repo, number, size)

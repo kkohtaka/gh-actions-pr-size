@@ -42,16 +42,16 @@ func getAllPullRequestFiles(
 	return res, nil
 }
 
-// getPullRequestSize determines a size of a pull request by calculating a total number of changed lines.
-func getPullRequestSize(
+// getPullRequestSize returns the total number of changed lines of the specified pull request.
+func getPullRequestChangedLines(
 	ctx context.Context,
 	client *github.Client,
 	owner, repo string,
 	number int,
-) (size, error) {
+) (int, error) {
 	files, err := getAllPullRequestFiles(ctx, client, owner, repo, number)
 	if err != nil {
-		return sizeUnknown, fmt.Errorf("get all commit files: %w", err)
+		return 0, fmt.Errorf("get all commit files: %w", err)
 	}
 
 	// TODO(kkohtaka): Filter out linguist-generated files
@@ -60,7 +60,7 @@ func getPullRequestSize(
 	for _, file := range files {
 		change += *file.Additions + *file.Deletions
 	}
-	return newSize(change), nil
+	return change, nil
 }
 
 // setLabelOnPullRequest checks the current labels on the pull request.  If there exists a label for pull request size,

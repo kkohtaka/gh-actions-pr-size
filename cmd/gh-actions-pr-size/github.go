@@ -25,7 +25,7 @@ func getAllPullRequestFiles(
 			&github.ListOptions{Page: offset + 1, PerPage: 100},
 		)
 		if err != nil {
-			logger.Error("Failed to remove a label from a pull request",
+			logger.Error("Failed to list files changed by a pull request",
 				zap.String("owner", owner),
 				zap.String("repo", repo),
 				zap.Int("number", number),

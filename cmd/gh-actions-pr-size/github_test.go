@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -84,32 +85,16 @@ func TestGetPullRequestChangedLines(t *testing.T) {
 				"GET",
 				baseURL,
 				func(req *http.Request) (*http.Response, error) {
-					page := 1
-					if v, ok := req.URL.Query()["page"]; ok && len(v) > 0 {
-						if v, err := strconv.Atoi(v[0]); err == nil {
-							page = v
-						}
-					}
+					page := getPage(req)
 					if page-1 >= len(tt.commitFiles) {
 						return nil, fmt.Errorf("invalid query value")
 					}
-
-					var links []string
-					links = append(links, fmt.Sprintf(`<%s?page=%d>; rel="first"`, baseURL, 1))
-					if page-1 >= 1 {
-						links = append(links, fmt.Sprintf(`<%s?page=%d>; rel="prev"`, baseURL, page-1))
-					}
-					if page+1 <= len(tt.commitFiles) {
-						links = append(links, fmt.Sprintf(`<%s?page=%d>; rel="next"`, baseURL, page+1))
-					}
-					links = append(links, fmt.Sprintf(`<%s?page=%d>; rel="last"`, baseURL, len(tt.commitFiles)))
-
 					resp, err := httpmock.NewJsonResponse(200, tt.commitFiles[page-1])
 					if err != nil {
 						return nil, err
 					}
 					resp.Header.Set("Content-Type", "application/json")
-					resp.Header.Set("Link", strings.Join(links, ", "))
+					resp.Header.Set("Link", generateLinkHeaderValue(baseURL, page, len(tt.commitFiles)))
 					return resp, nil
 				},
 			)
@@ -148,4 +133,323 @@ func TestGetPullRequestChangedLinesReturnsError(t *testing.T) {
 	)
 	assert.ErrorContains(t, err, "get all commit files: list commit files: ")
 	assert.Zero(t, got)
+}
+
+func TestSetLabelOnPullRequest(t *testing.T) {
+	tcs := []struct {
+		name   string
+		labels [][]*github.Label
+		size   size
+
+		wantDeletedLabels []string
+		wantCreatedLabels []string
+	}{
+		{
+			name: "The pull request doesn't have labels.",
+			labels: [][]*github.Label{
+				{},
+			},
+			size: sizeXL,
+			wantCreatedLabels: []string{
+				sizeXL.getLabel(),
+			},
+		},
+		{
+			name: "The pull request already has another size label.",
+			labels: [][]*github.Label{
+				{
+					{
+						Name: github.String(sizeL.getLabel()),
+					},
+				},
+			},
+			size: sizeXL,
+			wantDeletedLabels: []string{
+				sizeL.getLabel(),
+			},
+			wantCreatedLabels: []string{
+				sizeXL.getLabel(),
+			},
+		},
+		{
+			name: "The pull request already has the target size label.",
+			labels: [][]*github.Label{
+				{
+					{
+						Name: github.String(sizeXL.getLabel()),
+					},
+				},
+			},
+			size: sizeXL,
+		},
+		{
+			name: "The pull request has another size label and non-size labels.",
+			labels: [][]*github.Label{
+				{
+					{
+						Name: github.String("foo"),
+					},
+				},
+				{
+					{
+						Name: github.String("bar"),
+					},
+					{
+						Name: github.String(sizeS.getLabel()),
+					},
+					{
+						Name: github.String("baz"),
+					},
+				},
+				{
+					{
+						Name: github.String("qux"),
+					},
+				},
+			},
+			size: sizeM,
+			wantDeletedLabels: []string{
+				sizeS.getLabel(),
+			},
+			wantCreatedLabels: []string{
+				sizeM.getLabel(),
+			},
+		},
+		{
+			name: "The pull request has multiple size labels.",
+			labels: [][]*github.Label{
+				{
+					{
+						Name: github.String(sizeL.getLabel()),
+					},
+					{
+						Name: github.String(sizeM.getLabel()),
+					},
+				},
+			},
+			size: sizeXL,
+			wantDeletedLabels: []string{
+				sizeL.getLabel(),
+				sizeM.getLabel(),
+			},
+			wantCreatedLabels: []string{
+				sizeXL.getLabel(),
+			},
+		},
+	}
+	for _, tt := range tcs {
+		t.Run(tt.name, func(t *testing.T) {
+			client := &http.Client{}
+			httpmock.ActivateNonDefault(client)
+			defer httpmock.DeactivateAndReset()
+
+			var (
+				gotDeletedLabels []string
+				gotCreatedLabels []string
+			)
+			const baseURL = "https://api.github.com/repos/kkohtaka/gh-actions-pr-size/issues/42/labels"
+			httpmock.RegisterResponder(
+				"GET",
+				baseURL,
+				func(req *http.Request) (*http.Response, error) {
+					page := getPage(req)
+					if page-1 >= len(tt.labels) {
+						return nil, fmt.Errorf("invalid query value")
+					}
+					resp, err := httpmock.NewJsonResponse(200, tt.labels[page-1])
+					if err != nil {
+						return nil, err
+					}
+					resp.Header.Set("Content-Type", "application/json")
+					resp.Header.Set("Link", generateLinkHeaderValue(baseURL, page, len(tt.labels)))
+					return resp, nil
+				},
+			)
+			httpmock.RegisterResponder(
+				"DELETE",
+				fmt.Sprintf("=~^%s/(.*)$", baseURL),
+				func(req *http.Request) (*http.Response, error) {
+					label, err := httpmock.GetSubmatch(req, 1)
+					if err != nil {
+						return httpmock.NewStringResponse(400, "unable to get a label name"), nil
+					}
+					gotDeletedLabels = append(gotDeletedLabels, label)
+					resp := httpmock.NewBytesResponse(200, nil)
+					resp.Header.Set("Content-Type", "application/json")
+					return resp, nil
+				},
+			)
+			httpmock.RegisterResponder(
+				"POST",
+				baseURL,
+				func(req *http.Request) (*http.Response, error) {
+					var labels []string
+					if err := json.NewDecoder(req.Body).Decode(&labels); err != nil {
+						return httpmock.NewStringResponse(
+							400,
+							fmt.Sprintf("unable to decode request body: %v", err),
+						), nil
+					}
+					gotCreatedLabels = append(gotCreatedLabels, labels...)
+					resp := httpmock.NewBytesResponse(200, nil)
+					resp.Header.Set("Content-Type", "application/json")
+					return resp, nil
+				},
+			)
+
+			err := setLabelOnPullRequest(
+				context.Background(),
+				github.NewClient(client),
+				"kkohtaka",
+				"gh-actions-pr-size",
+				42,
+				tt.size,
+			)
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.wantDeletedLabels, gotDeletedLabels)
+			assert.Equal(t, tt.wantCreatedLabels, gotCreatedLabels)
+		})
+	}
+}
+
+func TestSetLabelOnPullRequestReturnsError(t *testing.T) {
+	const baseURL = "https://api.github.com/repos/kkohtaka/gh-actions-pr-size/issues/42/labels"
+
+	t.Run(
+		"GitHub API that listing issue labels returns an error.",
+		func(t *testing.T) {
+			client := &http.Client{}
+			httpmock.ActivateNonDefault(client)
+			defer httpmock.DeactivateAndReset()
+
+			httpmock.RegisterResponder(
+				"GET",
+				baseURL,
+				httpmock.NewErrorResponder(fmt.Errorf("test for error handling")),
+			)
+
+			err := setLabelOnPullRequest(
+				context.Background(),
+				github.NewClient(client),
+				"kkohtaka",
+				"gh-actions-pr-size",
+				42,
+				sizeXL,
+			)
+			assert.ErrorContains(t, err, "list labels by issue: ")
+		},
+	)
+
+	t.Run(
+		"GitHub API that deleting an issue label returns an error.",
+		func(t *testing.T) {
+			client := &http.Client{}
+			httpmock.ActivateNonDefault(client)
+			defer httpmock.DeactivateAndReset()
+
+			httpmock.RegisterResponder(
+				"GET",
+				baseURL,
+				func(req *http.Request) (*http.Response, error) {
+					resp, err := httpmock.NewJsonResponse(200, []*github.Label{
+						{
+							Name: github.String(sizeL.getLabel()),
+						},
+					})
+					if err != nil {
+						return nil, err
+					}
+					resp.Header.Set("Content-Type", "application/json")
+					resp.Header.Set("Link", generateLinkHeaderValue(baseURL, 1, 1))
+					return resp, nil
+				},
+			)
+			httpmock.RegisterResponder(
+				"DELETE",
+				fmt.Sprintf("%s/%s", baseURL, sizeL.getLabel()),
+				httpmock.NewErrorResponder(fmt.Errorf("test for error handling")),
+			)
+
+			err := setLabelOnPullRequest(
+				context.Background(),
+				github.NewClient(client),
+				"kkohtaka",
+				"gh-actions-pr-size",
+				42,
+				sizeXL,
+			)
+			assert.ErrorContains(t, err, "remove a label from a pull request: ")
+		},
+	)
+
+	t.Run(
+		"GitHub API that creating an issue label returns an error.",
+		func(t *testing.T) {
+			client := &http.Client{}
+			httpmock.ActivateNonDefault(client)
+			defer httpmock.DeactivateAndReset()
+
+			httpmock.RegisterResponder(
+				"GET",
+				baseURL,
+				func(req *http.Request) (*http.Response, error) {
+					resp, err := httpmock.NewJsonResponse(200, []*github.Label{
+						{
+							Name: github.String(sizeL.getLabel()),
+						},
+					})
+					if err != nil {
+						return nil, err
+					}
+					resp.Header.Set("Content-Type", "application/json")
+					resp.Header.Set("Link", generateLinkHeaderValue(baseURL, 1, 1))
+					return resp, nil
+				},
+			)
+			httpmock.RegisterResponder(
+				"DELETE",
+				fmt.Sprintf("%s/%s", baseURL, sizeL.getLabel()),
+				httpmock.NewBytesResponder(200, nil),
+			)
+			httpmock.RegisterResponder(
+				"POST",
+				baseURL,
+				httpmock.NewErrorResponder(fmt.Errorf("test for error handling")),
+			)
+
+			err := setLabelOnPullRequest(
+				context.Background(),
+				github.NewClient(client),
+				"kkohtaka",
+				"gh-actions-pr-size",
+				42,
+				sizeXL,
+			)
+			assert.ErrorContains(t, err, "add a label to a pull request: ")
+		},
+	)
+}
+
+func getPage(req *http.Request) int {
+	page := 1
+	if v, ok := req.URL.Query()["page"]; ok && len(v) > 0 {
+		if v, err := strconv.Atoi(v[0]); err == nil {
+			page = v
+		}
+	}
+	return page
+}
+
+func generateLinkHeaderValue(baseURL string, page, amount int) string {
+	var links []string
+	links = append(links, fmt.Sprintf(`<%s?page=%d>; rel="first"`, baseURL, 1))
+	if page-1 >= 1 {
+		links = append(links, fmt.Sprintf(`<%s?page=%d>; rel="prev"`, baseURL, page-1))
+	}
+	if page+1 <= amount {
+		links = append(links, fmt.Sprintf(`<%s?page=%d>; rel="next"`, baseURL, page+1))
+	}
+	links = append(links, fmt.Sprintf(`<%s?page=%d>; rel="last"`, baseURL, amount))
+	return strings.Join(links, ", ")
 }

@@ -2,19 +2,42 @@ name: Publish Docker Image
 on:
   push:
     branches:
-    - master
-    paths-ignore:
-    - README.md
-    - action.yaml
-    - '.github/workflows/**'
+      - master
+  release:
+    types:
+      - published
 jobs:
-  build:
+  publish_latest:
+    if: github.event_name == 'push'
+    name: Publish the Latest Version of Docker Image
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
-    - uses: actions/checkout@master
-    - uses: elgohr/Publish-Docker-Github-Action@master
-      with:
-        name: ${{ github.repository }}/gh-actions-pr-size
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-        registry: docker.pkg.github.com
+      - uses: actions/checkout@v3
+      - uses: elgohr/Publish-Docker-Github-Action@v4
+        with:
+          name: ${{ github.repository }}/gh-actions-pr-size
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          tags: latest
+
+  publish_release:
+    if: github.event_name == 'release'
+    name: Publish Release Version of Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v3
+      - uses: elgohr/Publish-Docker-Github-Action@v4
+        with:
+          name: ${{ github.repository }}/gh-actions-pr-size
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          tag_names: true
+

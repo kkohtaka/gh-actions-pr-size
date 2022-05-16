@@ -29,7 +29,6 @@ const (
 	sizeL
 	sizeXL
 	sizeXXL
-	sizeUnknown
 )
 
 func (s size) String() string {

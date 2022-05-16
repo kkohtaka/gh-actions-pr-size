@@ -1,5 +1,7 @@
 # GitHub Action PR Size
 
+[![codecov](https://codecov.io/gh/kkohtaka/gh-actions-pr-size/branch/master/graph/badge.svg?token=HOSV8LQDWH)](https://codecov.io/gh/kkohtaka/gh-actions-pr-size)
+
 A GitHub Action for checking Pull Request's size
 
 ## Usage

@@ -20,7 +20,11 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      - run: go test ./...
+      - run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
+      - uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.out
 
   build:
     runs-on: ubuntu-latest

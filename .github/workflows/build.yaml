@@ -31,7 +31,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
       - run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
-      - uses: codecov/codecov-action@v2
+      - uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage.out

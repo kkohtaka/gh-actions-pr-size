@@ -1,4 +1,4 @@
-package main
+package gh_test
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/go-github/v29/github"
 	"github.com/jarcoal/httpmock"
+	"github.com/kkohtaka/gh-actions-pr-size/pkg/gh"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -99,7 +100,7 @@ func TestGetPullRequestChangedLines(t *testing.T) {
 				},
 			)
 
-			got, err := getPullRequestChangedLines(
+			got, err := gh.GetPullRequestChangedLines(
 				context.Background(),
 				github.NewClient(client),
 				"kkohtaka",
@@ -124,7 +125,7 @@ func TestGetPullRequestChangedLinesReturnsError(t *testing.T) {
 		httpmock.NewErrorResponder(fmt.Errorf("test for error handling")),
 	)
 
-	got, err := getPullRequestChangedLines(
+	got, err := gh.GetPullRequestChangedLines(
 		context.Background(),
 		github.NewClient(client),
 		"kkohtaka",
@@ -139,7 +140,7 @@ func TestSetLabelOnPullRequest(t *testing.T) {
 	tcs := []struct {
 		name   string
 		labels [][]*github.Label
-		size   size
+		size   gh.Size
 
 		wantDeletedLabels []string
 		wantCreatedLabels []string
@@ -149,9 +150,9 @@ func TestSetLabelOnPullRequest(t *testing.T) {
 			labels: [][]*github.Label{
 				{},
 			},
-			size: sizeXL,
+			size: gh.SizeXL,
 			wantCreatedLabels: []string{
-				sizeXL.getLabel(),
+				gh.SizeXL.GetLabel(),
 			},
 		},
 		{
@@ -159,16 +160,16 @@ func TestSetLabelOnPullRequest(t *testing.T) {
 			labels: [][]*github.Label{
 				{
 					{
-						Name: github.String(sizeL.getLabel()),
+						Name: github.String(gh.SizeL.GetLabel()),
 					},
 				},
 			},
-			size: sizeXL,
+			size: gh.SizeXL,
 			wantDeletedLabels: []string{
-				sizeL.getLabel(),
+				gh.SizeL.GetLabel(),
 			},
 			wantCreatedLabels: []string{
-				sizeXL.getLabel(),
+				gh.SizeXL.GetLabel(),
 			},
 		},
 		{
@@ -176,11 +177,11 @@ func TestSetLabelOnPullRequest(t *testing.T) {
 			labels: [][]*github.Label{
 				{
 					{
-						Name: github.String(sizeXL.getLabel()),
+						Name: github.String(gh.SizeXL.GetLabel()),
 					},
 				},
 			},
-			size: sizeXL,
+			size: gh.SizeXL,
 		},
 		{
 			name: "The pull request has another size label and non-size labels.",
@@ -195,7 +196,7 @@ func TestSetLabelOnPullRequest(t *testing.T) {
 						Name: github.String("bar"),
 					},
 					{
-						Name: github.String(sizeS.getLabel()),
+						Name: github.String(gh.SizeS.GetLabel()),
 					},
 					{
 						Name: github.String("baz"),
@@ -207,12 +208,12 @@ func TestSetLabelOnPullRequest(t *testing.T) {
 					},
 				},
 			},
-			size: sizeM,
+			size: gh.SizeM,
 			wantDeletedLabels: []string{
-				sizeS.getLabel(),
+				gh.SizeS.GetLabel(),
 			},
 			wantCreatedLabels: []string{
-				sizeM.getLabel(),
+				gh.SizeM.GetLabel(),
 			},
 		},
 		{
@@ -220,20 +221,20 @@ func TestSetLabelOnPullRequest(t *testing.T) {
 			labels: [][]*github.Label{
 				{
 					{
-						Name: github.String(sizeL.getLabel()),
+						Name: github.String(gh.SizeL.GetLabel()),
 					},
 					{
-						Name: github.String(sizeM.getLabel()),
+						Name: github.String(gh.SizeM.GetLabel()),
 					},
 				},
 			},
-			size: sizeXL,
+			size: gh.SizeXL,
 			wantDeletedLabels: []string{
-				sizeL.getLabel(),
-				sizeM.getLabel(),
+				gh.SizeL.GetLabel(),
+				gh.SizeM.GetLabel(),
 			},
 			wantCreatedLabels: []string{
-				sizeXL.getLabel(),
+				gh.SizeXL.GetLabel(),
 			},
 		},
 	}
@@ -297,7 +298,7 @@ func TestSetLabelOnPullRequest(t *testing.T) {
 				},
 			)
 
-			err := setLabelOnPullRequest(
+			err := gh.SetLabelOnPullRequest(
 				context.Background(),
 				github.NewClient(client),
 				"kkohtaka",
@@ -329,13 +330,13 @@ func TestSetLabelOnPullRequestReturnsError(t *testing.T) {
 				httpmock.NewErrorResponder(fmt.Errorf("test for error handling")),
 			)
 
-			err := setLabelOnPullRequest(
+			err := gh.SetLabelOnPullRequest(
 				context.Background(),
 				github.NewClient(client),
 				"kkohtaka",
 				"gh-actions-pr-size",
 				42,
-				sizeXL,
+				gh.SizeXL,
 			)
 			assert.ErrorContains(t, err, "list labels by issue: ")
 		},
@@ -354,7 +355,7 @@ func TestSetLabelOnPullRequestReturnsError(t *testing.T) {
 				func(req *http.Request) (*http.Response, error) {
 					resp, err := httpmock.NewJsonResponse(200, []*github.Label{
 						{
-							Name: github.String(sizeL.getLabel()),
+							Name: github.String(gh.SizeL.GetLabel()),
 						},
 					})
 					if err != nil {
@@ -367,17 +368,17 @@ func TestSetLabelOnPullRequestReturnsError(t *testing.T) {
 			)
 			httpmock.RegisterResponder(
 				"DELETE",
-				fmt.Sprintf("%s/%s", baseURL, sizeL.getLabel()),
+				fmt.Sprintf("%s/%s", baseURL, gh.SizeL.GetLabel()),
 				httpmock.NewErrorResponder(fmt.Errorf("test for error handling")),
 			)
 
-			err := setLabelOnPullRequest(
+			err := gh.SetLabelOnPullRequest(
 				context.Background(),
 				github.NewClient(client),
 				"kkohtaka",
 				"gh-actions-pr-size",
 				42,
-				sizeXL,
+				gh.SizeXL,
 			)
 			assert.ErrorContains(t, err, "remove a label from a pull request: ")
 		},
@@ -396,7 +397,7 @@ func TestSetLabelOnPullRequestReturnsError(t *testing.T) {
 				func(req *http.Request) (*http.Response, error) {
 					resp, err := httpmock.NewJsonResponse(200, []*github.Label{
 						{
-							Name: github.String(sizeL.getLabel()),
+							Name: github.String(gh.SizeL.GetLabel()),
 						},
 					})
 					if err != nil {
@@ -409,7 +410,7 @@ func TestSetLabelOnPullRequestReturnsError(t *testing.T) {
 			)
 			httpmock.RegisterResponder(
 				"DELETE",
-				fmt.Sprintf("%s/%s", baseURL, sizeL.getLabel()),
+				fmt.Sprintf("%s/%s", baseURL, gh.SizeL.GetLabel()),
 				httpmock.NewBytesResponder(200, nil),
 			)
 			httpmock.RegisterResponder(
@@ -418,13 +419,13 @@ func TestSetLabelOnPullRequestReturnsError(t *testing.T) {
 				httpmock.NewErrorResponder(fmt.Errorf("test for error handling")),
 			)
 
-			err := setLabelOnPullRequest(
+			err := gh.SetLabelOnPullRequest(
 				context.Background(),
 				github.NewClient(client),
 				"kkohtaka",
 				"gh-actions-pr-size",
 				42,
-				sizeXL,
+				gh.SizeXL,
 			)
 			assert.ErrorContains(t, err, "add a label to a pull request: ")
 		},

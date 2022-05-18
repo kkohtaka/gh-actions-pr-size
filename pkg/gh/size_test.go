@@ -1,9 +1,10 @@
-package main
+package gh_test
 
 import (
 	"fmt"
 	"testing"
 
+	"github.com/kkohtaka/gh-actions-pr-size/pkg/gh"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -96,15 +97,15 @@ func TestNewSize(t *testing.T) {
 	}
 	for _, tt := range tcs {
 		t.Run(fmt.Sprintf("newSize(%d) => %s / %s", tt.change, tt.wantLabel, tt.wantString), func(t *testing.T) {
-			got := newSize(tt.change)
-			assert.Equal(t, tt.wantLabel, got.getLabel())
+			got := gh.NewSize(tt.change)
+			assert.Equal(t, tt.wantLabel, got.GetLabel())
 			assert.Equal(t, tt.wantString, got.String())
 		})
 	}
 }
 
 func TestSizeUnknown(t *testing.T) {
-	var size size = 999
+	var size gh.Size = 999
 	assert.Equal(t, "Unknown", size.String())
-	assert.Equal(t, labelUnknown, size.getLabel())
+	assert.Equal(t, "size/?", size.GetLabel())
 }

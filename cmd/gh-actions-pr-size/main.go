@@ -3,46 +3,61 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 
 	"github.com/google/go-github/v29/github"
-
-	"go.uber.org/zap"
+	"github.com/spf13/cobra"
 
 	"golang.org/x/oauth2"
+
+	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
-var (
-	logger *zap.Logger
-)
-
-func init() {
-	logger, _ = zap.NewDevelopment()
+var rootCmd = &cobra.Command{
+	Use:   "pr-size",
+	Short: "pr-size is a GitHub action for labeling Pull Requests's size",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return rootRun(cmd.Context())
+	},
 }
 
 func main() {
-	ctx := context.Background()
+	logger := zap.New()
+	ctx := log.IntoContext(context.Background(), zap.New())
+	if err := rootCmd.ExecuteContext(ctx); err != nil {
+		logger.Error(err, "Could not process the command.")
+	}
+}
+
+func rootRun(ctx context.Context) error {
+	logger := log.FromContext(ctx)
 
 	if eventType := os.Getenv("GITHUB_EVENT_NAME"); eventType != "pull_request" {
-		logger.Fatal("Could support event type other than \"pull_request\"", zap.String("eventType", eventType))
+		return fmt.Errorf(
+			"unsupported event type %q is specified: event types other than \"pull_request\" is not supported",
+			eventType,
+		)
 	}
 
 	eventPath := os.Getenv("GITHUB_EVENT_PATH")
 	if eventPath == "" {
-		logger.Fatal("Environment variable GITHUB_EVENT_PATH is mandatory")
+		return errors.New("mandatory environment variable GITHUB_EVENT_PATH is not specified")
 	}
 
 	payload, err := ioutil.ReadFile(eventPath)
 	if err != nil {
-		logger.Fatal("Could not read event file", zap.Error(err), zap.String("eventPath", eventPath))
+		return fmt.Errorf("unable to read an event file at %q: %w", eventPath, err)
 	}
 
 	var event github.PullRequestEvent
 	err = json.Unmarshal(payload, &event)
 	if err != nil {
-		logger.Fatal("Could not unmarshal an event payload", zap.Error(err))
+		return fmt.Errorf("unable to unmarshal an event payload to JSON: %w", err)
 	}
 
 	owner := event.GetRepo().GetOwner().GetLogin()
@@ -50,9 +65,9 @@ func main() {
 	number := event.GetPullRequest().GetNumber()
 
 	logger.Info("Successfully read an event payload",
-		zap.String("owner", owner),
-		zap.String("repo", repo),
-		zap.Int("number", number),
+		"owner", owner,
+		"repo", repo,
+		"number", number,
 	)
 
 	var tc *http.Client
@@ -66,15 +81,16 @@ func main() {
 
 	changed, err := getPullRequestChangedLines(ctx, client, owner, repo, number)
 	if err != nil {
-		logger.Fatal("Could not get the total number of changed lines in the pull request", zap.Error(err))
+		return fmt.Errorf("unable to get the number of changed lines in a pull request: %w", err)
 	}
 
 	size := newSize(changed)
-	logger.Info("Got a size of a pull request", zap.String("size", size.String()))
+	logger.Info("Got a size of a pull request", "size", size.String())
 
 	err = setLabelOnPullRequest(ctx, client, owner, repo, number, size)
 	if err != nil {
-		logger.Fatal("Could not set a label to represent a pull request size", zap.Error(err))
+		return fmt.Errorf("unable to set a label on a pull request: %w", err)
 	}
-	logger.Info("Set a label to represent a pull request size", zap.String("size", size.String()))
+	logger.Info("Set a label to represent a pull request size", "size", size.String())
+	return nil
 }

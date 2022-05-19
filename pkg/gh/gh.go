@@ -1,4 +1,4 @@
-package main
+package gh
 
 import (
 	"context"
@@ -42,8 +42,8 @@ func getAllPullRequestFiles(
 	return res, nil
 }
 
-// getPullRequestSize returns the total number of changed lines of the specified pull request.
-func getPullRequestChangedLines(
+// GetPullRequestSize returns the total number of changed lines of the specified pull request.
+func GetPullRequestChangedLines(
 	ctx context.Context,
 	client *github.Client,
 	owner, repo string,
@@ -63,20 +63,20 @@ func getPullRequestChangedLines(
 	return change, nil
 }
 
-// setLabelOnPullRequest checks the current labels on the pull request.  If there exists a label for pull request size,
+// SetLabelOnPullRequest checks the current labels on the pull request.  If there exists a label for pull request size,
 // the function replaces it with the proper label.  Otherwise, the function just attach the proper label.
-func setLabelOnPullRequest(
+func SetLabelOnPullRequest(
 	ctx context.Context,
 	client *github.Client,
 	owner, repo string,
 	number int,
-	size size,
+	size Size,
 ) error {
 	logger := log.FromContext(ctx).WithValues(
 		"owner", owner,
 		"repo", repo,
 		"number", number,
-		"label", size.getLabel(),
+		"label", size.GetLabel(),
 	)
 
 	for offset := 0; ; offset++ {
@@ -92,7 +92,7 @@ func setLabelOnPullRequest(
 		for _, label := range labels {
 			newLogger := logger.WithValues("remove", label.GetName())
 			if strings.HasPrefix(label.GetName(), labelPrefix) {
-				if label.GetName() == size.getLabel() {
+				if label.GetName() == size.GetLabel() {
 					newLogger.Info("The pull request already has the label")
 					return nil
 				}
@@ -109,7 +109,7 @@ func setLabelOnPullRequest(
 		}
 	}
 
-	if _, _, err := client.Issues.AddLabelsToIssue(ctx, owner, repo, number, []string{size.getLabel()}); err != nil {
+	if _, _, err := client.Issues.AddLabelsToIssue(ctx, owner, repo, number, []string{size.GetLabel()}); err != nil {
 		logger.Error(err, "Failed to add a label to a pull request")
 		return fmt.Errorf("add a label to a pull request: %w", err)
 	}

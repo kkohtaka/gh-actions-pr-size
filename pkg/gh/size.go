@@ -1,4 +1,4 @@
-package main
+package gh
 
 const (
 	labelPrefix = "size/"
@@ -20,68 +20,68 @@ const (
 	sizeThresholdXXL = 1000
 )
 
-type size int
+type Size int
 
 const (
-	sizeXS size = iota
-	sizeS
-	sizeM
-	sizeL
-	sizeXL
-	sizeXXL
+	SizeXS Size = iota
+	SizeS
+	SizeM
+	SizeL
+	SizeXL
+	SizeXXL
 )
 
-func (s size) String() string {
+func (s Size) String() string {
 	switch s {
-	case sizeXS:
+	case SizeXS:
 		return "XS"
-	case sizeS:
+	case SizeS:
 		return "S"
-	case sizeM:
+	case SizeM:
 		return "M"
-	case sizeL:
+	case SizeL:
 		return "L"
-	case sizeXL:
+	case SizeXL:
 		return "XL"
-	case sizeXXL:
+	case SizeXXL:
 		return "XXL"
 	default:
 		return "Unknown"
 	}
 }
 
-func (s size) getLabel() string {
+func (s Size) GetLabel() string {
 	switch s {
-	case sizeXS:
+	case SizeXS:
 		return labelXS
-	case sizeS:
+	case SizeS:
 		return labelS
-	case sizeM:
+	case SizeM:
 		return labelM
-	case sizeL:
+	case SizeL:
 		return labelL
-	case sizeXL:
+	case SizeXL:
 		return labelXL
-	case sizeXXL:
+	case SizeXXL:
 		return labelXXL
 	default:
 		return labelUnknown
 	}
 }
 
-func newSize(change int) size {
+func NewSize(change int) Size {
 	switch {
 	case change < sizeThresholdS:
-		return sizeXS
+		return SizeXS
 	case change < sizeThresholdM:
-		return sizeS
+		return SizeS
 	case change < sizeThresholdL:
-		return sizeM
+		return SizeM
 	case change < sizeThresholdXL:
-		return sizeL
+		return SizeL
 	case change < sizeThresholdXXL:
-		return sizeXL
+		return SizeXL
 	default:
-		return sizeXXL
+		return SizeXXL
 	}
 }

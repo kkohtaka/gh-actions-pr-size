@@ -1,9 +1,9 @@
-name: pr-size
-description: Check the size of Pull Request
-author: "Kazumasa Kohtaka <kkohtaka@gmail.com>"
-branding:
-  icon: 'git-pull-request'
-  color: 'blue'
+name: 'Pull Request Size'
+description: 'Attach a label representing the size of Pull Request'
+author: 'Kazumasa Kohtaka <kkohtaka@gmail.com>'
 runs:
   using: 'docker'
   image: 'Dockerfile'
+branding:
+  icon: 'git-pull-request'
+  color: 'blue'

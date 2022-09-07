@@ -1,4 +1,4 @@
-FROM golang:1.19.0 AS builder
+FROM golang:1.19.1 AS builder
 COPY . /src/github.com/kkohtaka/gh-actions-pr-size
 WORKDIR /src/github.com/kkohtaka/gh-actions-pr-size
 RUN CGO_ENABLED=0 GOOS=linux GO111MODULE=on \

@@ -6,7 +6,7 @@ require (
 	github.com/google/go-github/v29 v29.0.3
 	github.com/jarcoal/httpmock v1.2.0
 	github.com/spf13/cobra v1.6.0
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.1
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	sigs.k8s.io/controller-runtime v0.13.0
 )

@@ -75,7 +75,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
       - run: go build -a -o bin/pr-size ./cmd/gh-actions-pr-size
-      - uses: elgohr/Publish-Docker-Github-Action@v4
+      - uses: elgohr/Publish-Docker-Github-Action@v5
         with:
           name: ${{ github.repository }}/gh-actions-pr-size
           username: ${{ github.actor }}

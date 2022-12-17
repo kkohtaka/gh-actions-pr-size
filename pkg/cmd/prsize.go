@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 
@@ -39,7 +38,7 @@ func runPRSize(ctx context.Context) error {
 		return errors.New("mandatory environment variable GITHUB_EVENT_PATH is not specified")
 	}
 
-	payload, err := ioutil.ReadFile(eventPath)
+	payload, err := os.ReadFile(eventPath)
 	if err != nil {
 		return fmt.Errorf("unable to read an event file at %q: %w", eventPath, err)
 	}

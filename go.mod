@@ -7,7 +7,7 @@ require (
 	github.com/jarcoal/httpmock v1.2.0
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/oauth2 v0.7.0
+	golang.org/x/oauth2 v0.8.0
 	sigs.k8s.io/controller-runtime v0.15.0
 )
 

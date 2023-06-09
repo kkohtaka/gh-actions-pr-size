@@ -1,6 +1,6 @@
 module github.com/kkohtaka/gh-actions-pr-size
 
-go 1.18
+go 1.20
 
 require (
 	github.com/google/go-github/v29 v29.0.3

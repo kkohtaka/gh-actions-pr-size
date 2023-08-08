@@ -7,7 +7,7 @@ RUN CGO_ENABLED=0 GOOS=linux GO111MODULE=on \
   -o /bin/pr-size \
   /src/github.com/kkohtaka/gh-actions-pr-size/cmd/gh-actions-pr-size/
 
-FROM alpine:3.18.2 as certs-installer
+FROM alpine:3.18.3 as certs-installer
 RUN apk add --update ca-certificates
 
 FROM scratch

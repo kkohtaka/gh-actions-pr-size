@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/google/go-github/v29 v29.0.3
-	github.com/jarcoal/httpmock v1.3.0
+	github.com/jarcoal/httpmock v1.3.1
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/oauth2 v0.9.0
